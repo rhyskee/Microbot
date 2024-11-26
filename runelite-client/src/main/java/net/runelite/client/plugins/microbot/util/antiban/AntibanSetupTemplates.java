@@ -71,26 +71,26 @@ public class AntibanSetupTemplates {
     public void applyCombatSetup() {
         Rs2AntibanSettings.antibanEnabled = true;
         Rs2AntibanSettings.usePlayStyle = true;
-        Rs2AntibanSettings.randomIntervals = false;
+        Rs2AntibanSettings.randomIntervals = true;
         Rs2AntibanSettings.simulateFatigue = true;
         Rs2AntibanSettings.simulateAttentionSpan = true;
         Rs2AntibanSettings.behavioralVariability = true;
         Rs2AntibanSettings.nonLinearIntervals = true;
         Rs2AntibanSettings.profileSwitching = true;
         Rs2AntibanSettings.timeOfDayAdjust = false;
-        Rs2AntibanSettings.simulateMistakes = false;
+        Rs2AntibanSettings.simulateMistakes = true;
         Rs2AntibanSettings.naturalMouse = true;
         Rs2AntibanSettings.contextualVariability = true;
-        Rs2AntibanSettings.dynamicIntensity = false;
-        Rs2AntibanSettings.dynamicActivity = false;
+        Rs2AntibanSettings.dynamicIntensity = true;
+        Rs2AntibanSettings.dynamicActivity = true;
         Rs2AntibanSettings.devDebug = false;
-        Rs2AntibanSettings.takeMicroBreaks = false;
+        Rs2AntibanSettings.takeMicroBreaks = true;
         Rs2AntibanSettings.playSchedule = true;
         Rs2AntibanSettings.universalAntiban = false;
-        Rs2AntibanSettings.microBreakDurationLow = 3;
+        Rs2AntibanSettings.microBreakDurationLow = 2;
         Rs2AntibanSettings.microBreakDurationHigh = 8;
         Rs2AntibanSettings.actionCooldownChance = 1.00;
-        Rs2AntibanSettings.microBreakChance = 0.05;
+        Rs2AntibanSettings.microBreakChance = 0.015;
         Rs2Antiban.setActivity(Activity.GENERAL_COMBAT);
     }
 
@@ -227,26 +227,26 @@ public class AntibanSetupTemplates {
         // Implementation for Thieving setup
         Rs2AntibanSettings.antibanEnabled = true;
         Rs2AntibanSettings.usePlayStyle = true;
-        Rs2AntibanSettings.randomIntervals = false;
+        Rs2AntibanSettings.randomIntervals = true;
         Rs2AntibanSettings.simulateFatigue = true;
         Rs2AntibanSettings.simulateAttentionSpan = true;
         Rs2AntibanSettings.behavioralVariability = true;
         Rs2AntibanSettings.nonLinearIntervals = true;
         Rs2AntibanSettings.profileSwitching = true;
         Rs2AntibanSettings.timeOfDayAdjust = false;
-        Rs2AntibanSettings.simulateMistakes = false;
+        Rs2AntibanSettings.simulateMistakes = true;
         Rs2AntibanSettings.naturalMouse = true;
         Rs2AntibanSettings.contextualVariability = true;
-        Rs2AntibanSettings.dynamicIntensity = false;
-        Rs2AntibanSettings.dynamicActivity = false;
+        Rs2AntibanSettings.dynamicIntensity = true;
+        Rs2AntibanSettings.dynamicActivity = true;
         Rs2AntibanSettings.devDebug = false;
-        Rs2AntibanSettings.takeMicroBreaks = false;
+        Rs2AntibanSettings.takeMicroBreaks = true;
         Rs2AntibanSettings.playSchedule = true;
         Rs2AntibanSettings.universalAntiban = false;
-        Rs2AntibanSettings.microBreakDurationLow = 3;
-        Rs2AntibanSettings.microBreakDurationHigh = 8;
+        Rs2AntibanSettings.microBreakDurationLow = 2;
+        Rs2AntibanSettings.microBreakDurationHigh = 11;
         Rs2AntibanSettings.actionCooldownChance = 1.00;
-        Rs2AntibanSettings.microBreakChance = 0.05;
+        Rs2AntibanSettings.microBreakChance = 0.07;
         Rs2Antiban.setActivity(Activity.GENERAL_THIEVING);
     }
 

@@ -9,7 +9,8 @@ public enum PlayStyle {
     BALANCED("Balanced", 10, 15),                  // Moderate breaks
     CAREFUL("Careful", 15, 20),                    // Longer breaks
     CAUTIOUS("Cautious", 20, 30),                  // Very long breaks
-    PASSIVE("Passive", 25, 35);                    // Minimal actions
+    PASSIVE("Passive", 25, 35),                    // Minimal actions
+    FLEXIBLE("Flexible", 5, 45);                    // Larger variety
 
     private final String name;
     private final int primaryTickInterval;

@@ -17,6 +17,8 @@ import net.runelite.client.plugins.microbot.util.npc.Rs2NpcManager;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.prayer.Rs2Prayer;
 import net.runelite.client.plugins.microbot.util.prayer.Rs2PrayerEnum;
+import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
+
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +38,11 @@ public class AttackNpcScript extends Script {
     }
 
     public void run(PlayerAssistConfig config) {
+        Rs2Antiban.resetAntibanSettings();
+        Rs2Antiban.antibanSetupTemplates.applyCombatSetup();
+
+        Rs2Antiban.takeMicroBreakByChance();
+
         try {
             Rs2NpcManager.loadJson();
         } catch (Exception e) {

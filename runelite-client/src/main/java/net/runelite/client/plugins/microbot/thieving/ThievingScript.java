@@ -15,6 +15,7 @@ import net.runelite.client.plugins.microbot.util.magic.Rs2Magic;
 import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
+import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
 import net.runelite.client.plugins.skillcalculator.skills.MagicAction;
 
 import java.util.Arrays;
@@ -29,6 +30,8 @@ public class ThievingScript extends Script {
     ThievingConfig config;
 
     public boolean run(ThievingConfig config) {
+        Rs2Antiban.resetAntibanSettings();
+        Rs2Antiban.antibanSetupTemplates.applyThievingSetup();
         this.config = config;
         Rs2Walker.setTarget(null);
         Microbot.isCantReachTargetDetectionEnabled = true;
