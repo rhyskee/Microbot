@@ -46,13 +46,13 @@ public class GabulhasKarambwansScript extends Script {
                     case WALKING_TO_RING_TO_BANK:
                         walkToRingToBank();
                         botStatus = states.WALKING_TO_BANK;
-                        sleep(100, 3000);
+                        sleep(100, 4500);
 
                         break;
                     case WALKING_TO_BANK:
                         doBank();
                         botStatus = states.BANKING;
-                        sleep(100, 3000);
+                        sleep(100, 4500);
 
                         break;
                     case BANKING:
@@ -63,7 +63,7 @@ public class GabulhasKarambwansScript extends Script {
                     case WALKING_TO_RING_TO_FISH:
                         walkToRingToFish();
                         botStatus = states.FISHING;
-                        sleep(100, 3000);
+                        sleep(100, 8000);
                         break;
                 }
 
@@ -102,7 +102,7 @@ public class GabulhasKarambwansScript extends Script {
     private void doBank() {
         Rs2Walker.walkTo(bankPoint, 6);
         while (!Rs2Player.isNearArea(bankPoint, 6)  && super.isRunning()) {
-            sleep(100, 600);
+            sleep(100, 800);
         }
         Rs2Bank.handleBankPin("");
         Rs2Bank.useBank();
@@ -110,6 +110,8 @@ public class GabulhasKarambwansScript extends Script {
 
     private void useBank() {
         Rs2Bank.depositAll(3142);
+        sleep(250,500);
+        Rs2Bank.emptyFishBarrel();
     }
 
     private void interactWithFishingSpot() {
@@ -121,7 +123,7 @@ public class GabulhasKarambwansScript extends Script {
         while(!Rs2Walker.isInArea(zanarisRing.dx(2), zanarisRing.dy(-2))  && super.isRunning()) {
 
             Rs2Walker.walkTo(zanarisRing.dx(2), 2);
-            sleep(1000, 2000);
+            sleep(750, 1500);
             var fairyRing = Rs2GameObject.findObjectById(29560);
             if(!Objects.isNull(fairyRing)) {
                 Rs2GameObject.interact(fairyRing, "Last-destination (DKP)");
