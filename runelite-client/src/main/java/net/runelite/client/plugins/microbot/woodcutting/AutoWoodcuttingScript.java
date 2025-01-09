@@ -131,6 +131,10 @@ public class AutoWoodcuttingScript extends Script {
             case BANK:
                 List<String> itemNames = Arrays.stream(config.itemsToBank().split(",")).map(String::toLowerCase).collect(Collectors.toList());
 
+                if (Rs2Bank.isOpen()) {
+                    Rs2Bank.emptyLogBasket();
+                };
+
                 if (!Rs2Bank.bankItemsAndWalkBackToOriginalPosition(itemNames, calculateReturnPoint(config)))
                     return;
 
