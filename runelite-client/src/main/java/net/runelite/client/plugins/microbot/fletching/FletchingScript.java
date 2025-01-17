@@ -91,7 +91,7 @@ public class FletchingScript extends Script {
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
             }
-        }, 0, 600, TimeUnit.MILLISECONDS);
+        }, 6000, 10000, TimeUnit.MILLISECONDS);
     }
 
     private void bankItems(FletchingConfig config) {
@@ -167,10 +167,10 @@ public class FletchingScript extends Script {
         // Final check to ensure both items are in the inventory
         if (!Rs2Inventory.hasItem(primaryItemToFletch) || !Rs2Inventory.hasItem(secondaryItemToFletch)) {
             Microbot.log("waiting for inventory changes.");
-            Rs2Inventory.waitForInventoryChanges(5000);
+            Rs2Inventory.waitForInventoryChanges(6000);
         }
 
-        Rs2Random.waitEx(200,100);
+        Rs2Random.waitEx(500,250);
         Rs2Bank.closeBank();
     }
 
