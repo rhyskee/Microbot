@@ -12,6 +12,7 @@ public enum Activities {
     GLASSBLOWING("Glassblowing"),
     STAFF_MAKING("Staff Making"),
     FLAX_SPINNING("Flax Spinning");
+    AMETHYST_CUTTING("Amethyst Cutting");
 
     private final String name;
 

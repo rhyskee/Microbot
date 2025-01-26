@@ -32,6 +32,7 @@ public class CraftingPlugin extends Plugin {
     private final GlassblowingScript glassblowingScript = new GlassblowingScript();
     private final StaffScript staffScript = new StaffScript();
     private final FlaxSpinScript flaxSpinScript = new FlaxSpinScript();
+
     @Inject
     private CraftingConfig config;
     @Inject
