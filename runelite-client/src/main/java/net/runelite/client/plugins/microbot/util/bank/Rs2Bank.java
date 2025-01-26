@@ -1663,18 +1663,6 @@ public class Rs2Bank {
     }
 
     /**
-     * Empty fish barrel
-     *
-     * @return true if fish barrel was emptied
-     */
-
-    public static boolean emptyFishBarrel() {
-        Rs2Item fishBarrel = Rs2Inventory.get(ItemID.OPEN_FISH_BARREL);
-        if (fishBarrel == null) return false;
-        return Rs2Inventory.interact(fishBarrel, "Empty");
-    }
-
-    /**
      * Empty log basket
      *
      * @return true if log basket was emptied
