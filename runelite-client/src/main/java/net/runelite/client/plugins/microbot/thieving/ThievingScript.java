@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 
 public class ThievingScript extends Script {
 
-    public static String version = "1.6.1";
+    public static String version = "1.6.2";
     ThievingConfig config;
 
     public boolean run(ThievingConfig config) {
@@ -50,7 +50,8 @@ public class ThievingScript extends Script {
                 List<Rs2Item> foods = Rs2Inventory.getInventoryFood();
 
                 if (config.useFood()) {
-                    handleFood(foods);
+                    boolean hasFood = handleFood(foods);
+                    if (!hasFood) return;
                 }
 
                 if (Rs2Inventory.isFull()) {
@@ -72,16 +73,16 @@ public class ThievingScript extends Script {
         return true;
     }
 
-    private void handleFood(List<Rs2Item> food) {
+    private boolean handleFood(List<Rs2Item> food) {
         if (food.isEmpty()) {
             openCoinPouches(1);
             bank();
-            return;
+            return false;
         }
 
-        if (Rs2Player.eatAt(config.hitpoints())) {
-            return;
-        }
+        Rs2Player.eatAt(config.hitpoints());
+
+        return true;
     }
 
     @Override
