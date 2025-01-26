@@ -497,7 +497,7 @@ public class Rs2Bank {
         } else {
             invokeMenu(HANDLE_X_UNSET, rs2Item);
 
-            sleep(1200);
+            sleep(Rs2Random.randomGaussian(1100,200));
             Rs2Keyboard.typeString(String.valueOf(amount));
             Rs2Keyboard.enter();
             sleepUntil(() -> Rs2Inventory.hasItem(rs2Item.id), 2500);
@@ -577,7 +577,7 @@ public class Rs2Bank {
         for (Rs2Item item : items) {
             if (item == null) continue;
             depositAll(item);
-            sleep(300, 600);
+            sleep(Rs2Random.randomGaussian(400,200));
             result = true;
         }
         return result;
@@ -1128,7 +1128,7 @@ public class Rs2Bank {
             }
 
             if (action) {
-                sleepUntil(() -> isOpen() || isBankPinWidgetVisible(), 5000);
+                sleepUntil(Rs2Bank::isOpen, 5000);
             }
             return action;
         } catch (Exception ex) {
@@ -1152,7 +1152,7 @@ public class Rs2Bank {
             }
 
             sleepUntil(Rs2Bank::isOpen);
-            sleep(600, 1000);
+            sleep(Rs2Random.randomGaussian(800,200));
             return true;
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
@@ -1182,7 +1182,7 @@ public class Rs2Bank {
             }
 
             sleepUntil(Rs2Bank::isOpen);
-            sleep(600, 1000);
+            sleep(Rs2Random.randomGaussian(800,200));
             return true;
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
@@ -1304,61 +1304,58 @@ public class Rs2Bank {
 
     public static BankLocation getNearestBank(WorldPoint worldPoint) {
         Microbot.log("Calculating nearest bank path...");
-        BankLocation nearest = null;
-        double dist = Double.MAX_VALUE;
-        int y = worldPoint.getY();
-        boolean worldpointIsInCave = y > 6400;
-        WorldPoint location;
-        double currDist;
-        final int penalty = 10; // penalty if the bank is outside the cave and player is inside cave. This is to avoid being closer than banks in a cave
-        for (BankLocation bankLocation : BankLocation.values()) {
-            if (!bankLocation.hasRequirements()) continue;
 
-            boolean bankisInCave = bankLocation.getWorldPoint().getY() > 6400;
+        // Convert the enum values to a Stream, filter out those
+        // that don't meet requirements, then work in parallel.
+        BankLocation nearest = Arrays.stream(BankLocation.values())
+                .parallel()
+                .filter(BankLocation::hasRequirements)
+                .min(Comparator.comparingInt(bankLocation ->
+                        Rs2Walker.getTotalTiles(worldPoint,bankLocation.getWorldPoint())))
+                .orElse(null);
 
-            if (!bankisInCave && worldpointIsInCave) {
-                location = new WorldPoint(worldPoint.getX(),  worldPoint.getY() - 6400, Microbot.getClient().getPlane());
-                currDist = location.distanceTo2D(bankLocation.getWorldPoint()) + penalty;
-            } else {
-                location = worldPoint;
-                currDist = location.distanceTo2D(bankLocation.getWorldPoint());
-            }
-
-
-            if (nearest == null || currDist < dist) {
-                if (Rs2Walker.canReach(bankLocation.getWorldPoint())) {
-                    dist = currDist;
-                    nearest = bankLocation;
-                }
-            }
-        }
         if (nearest != null) {
             Microbot.log("Found nearest bank: " + nearest.name());
+
         } else {
-            Microbot.log("Unable to find a bank");
+            Microbot.log("Unable to find nearest bank");
+            return null;
         }
         return nearest;
     }
 
-
     /**
-     * Walk to the closest bank
+     * Walks to the closest bank using the nearest bank location.
+     * Toggles run energy if the player is not already running.
      *
-     * @return true if player location is less than 4 tiles away from the bank location
+     * @return true if the player's location is within 4 tiles of the bank location.
      */
     public static boolean walkToBank() {
         return walkToBank(getNearestBank());
     }
 
     /**
-     * Walk to bank location
-     * 
-     * @param bankLocation 
-     * @return true if player location is less than 4 tiles away from the bank location
+     * Walks to a specified bank location.
+     * Toggles run energy if the player is not already running.
+     *
+     * @param bankLocation the target bank location to walk to.
+     * @return true if the player's location is within 4 tiles of the specified bank location.
      */
     public static boolean walkToBank(BankLocation bankLocation) {
+        return walkToBank(bankLocation, true);
+    }
+
+    /**
+     * Walks to a specified bank location with an option to toggle run energy.
+     * If the bank is already open, the method exits immediately.
+     *
+     * @param bankLocation the target bank location to walk to.
+     * @param toggleRun    whether to toggle run energy during the walk.
+     * @return true if the player's location is within 4 tiles of the specified bank location.
+     */
+    public static boolean walkToBank(BankLocation bankLocation, boolean toggleRun) {
         if (Rs2Bank.isOpen()) return true;
-        Rs2Player.toggleRunEnergy(true);
+        Rs2Player.toggleRunEnergy(toggleRun);
         Microbot.status = "Walking to nearest bank " + bankLocation.toString();
         Rs2Walker.walkTo(bankLocation.getWorldPoint(), 4);
         return bankLocation.getWorldPoint().distanceTo2D(Microbot.getClient().getLocalPlayer().getWorldLocation()) <= 4;
@@ -1387,23 +1384,37 @@ public class Rs2Bank {
     }
 
     /**
-     * Walk to the closest bank
+     * Walks to the closest bank and attempts to use the bank interface.
+     * Toggles run energy if the player is not already running.
      *
-     * @return true if bank interface is open
+     * @return true if the bank interface is successfully opened.
      */
     public static boolean walkToBankAndUseBank() {
         return walkToBankAndUseBank(getNearestBank());
     }
 
     /**
-     * Walk to bank location & use bank
+     * Walks to a specified bank location and attempts to use the bank interface.
+     * Toggles run energy if the player is not already running.
      *
-     * @param bankLocation 
-     * @return true if bank interface is open
+     * @param bankLocation the target bank location to walk to and use.
+     * @return true if the bank interface is successfully opened.
      */
     public static boolean walkToBankAndUseBank(BankLocation bankLocation) {
+        return walkToBankAndUseBank(bankLocation, true);
+    }
+
+    /**
+     * Walks to a specified bank location with an option to toggle run energy and attempts to use the bank interface.
+     * If the bank is already open, the method exits immediately.
+     *
+     * @param bankLocation the target bank location to walk to and use.
+     * @param toggleRun    whether to toggle run energy during the walk.
+     * @return true if the bank interface is successfully opened.
+     */
+    public static boolean walkToBankAndUseBank(BankLocation bankLocation, boolean toggleRun) {
         if (Rs2Bank.isOpen()) return true;
-        Rs2Player.toggleRunEnergy(true);
+        Rs2Player.toggleRunEnergy(toggleRun);
         Microbot.status = "Walking to nearest bank " + bankLocation.toString();
         boolean result = bankLocation.getWorldPoint().distanceTo(Microbot.getClient().getLocalPlayer().getWorldLocation()) <= 8;
         if (result) {
@@ -1569,7 +1580,7 @@ public class Rs2Bank {
     public static boolean setWithdrawAsNote() {
         if (hasWithdrawAsNote()) return true;
         Rs2Widget.clickWidget(786458);
-        sleep(600);
+        sleep(Rs2Random.randomGaussian(550,100));
         return hasWithdrawAsNote();
     }
 
@@ -1581,7 +1592,7 @@ public class Rs2Bank {
     public static boolean setWithdrawAsItem() {
         if (hasWithdrawAsItem()) return true;
         Rs2Widget.clickWidget(786456);
-        sleep(600);
+        sleep(Rs2Random.randomGaussian(550,100));
         return hasWithdrawAsItem();
     }
 
@@ -1646,21 +1657,9 @@ public class Rs2Bank {
      */
 
     public static boolean emptyFishBarrel() {
-        Rs2Item fishBarrel = Rs2Inventory.get(ItemID.OPEN_FISH_BARREL);
+        Rs2Item fishBarrel = Rs2Inventory.get(ItemID.FISH_BARREL,ItemID.OPEN_FISH_BARREL);
         if (fishBarrel == null) return false;
         return Rs2Inventory.interact(fishBarrel, "Empty");
-    }
-
-    /**
-     * Empty log basket
-     *
-     * @return true if log basket was emptied
-     */
-
-    public static boolean emptyLogBasket() {
-        Rs2Item logBasket = Rs2Inventory.get(ItemID.OPEN_LOG_BASKET);
-        if (logBasket == null) return false;
-        return Rs2Inventory.interact(logBasket, "Empty");
     }
 
 

@@ -270,7 +270,10 @@ public class Rs2GroundItem {
     }
 
     private static boolean coreLoot(GroundItem groundItem) {
-        final int quantity = groundItem.isStackable() ? 1 : groundItem.getQuantity();
+        int quantity = groundItem.isStackable() ? 1 : groundItem.getQuantity();
+        if (Rs2Inventory.getEmptySlots() < quantity) {
+            quantity = Rs2Inventory.getEmptySlots();
+        }
         for (int i = 0; i < quantity; i++) {
 
             /**
@@ -343,7 +346,7 @@ public class Rs2GroundItem {
         final Predicate<GroundItem> filter = groundItem ->
                 groundItem.getLocation().distanceTo(Microbot.getClient().getLocalPlayer().getWorldLocation()) < params.getRange() &&
                         (!params.isAntiLureProtection() || (params.isAntiLureProtection() && groundItem.getOwnership() == OWNERSHIP_SELF)) &&
-                        Arrays.stream(params.getNames()).anyMatch(name -> groundItem.getName().toLowerCase().contains(name.toLowerCase()));
+                        Arrays.stream(params.getNames()).anyMatch(name -> groundItem.getName().trim().toLowerCase().contains(name.trim().toLowerCase()));
         List<GroundItem> groundItems = GroundItemsPlugin.getCollectedGroundItems().values().stream()
                 .filter(filter)
                 .collect(Collectors.toList());

@@ -145,6 +145,9 @@ public class Microbot {
     public static boolean cantHopWorld = false;
 
     public static int cantReachTargetRetries = 0;
+    
+    @Getter
+    public static final BlockingEventManager blockingEventManager = new BlockingEventManager();
 
     @Getter
     public static HashMap<String, Integer> scriptRuntimes = new HashMap<>();
@@ -286,6 +289,7 @@ public class Microbot {
         {
             try {
                 getPluginManager().setPluginEnabled(plugin, true);
+                getPluginManager().startPlugin(plugin);
                 getPluginManager().startPlugins();
             } catch (Exception e) {
                 e.printStackTrace();
