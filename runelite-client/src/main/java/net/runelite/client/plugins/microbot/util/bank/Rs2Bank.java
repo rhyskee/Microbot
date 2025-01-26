@@ -1662,6 +1662,29 @@ public class Rs2Bank {
         return Rs2Inventory.interact(fishBarrel, "Empty");
     }
 
+    /**
+     * Empty fish barrel
+     *
+     * @return true if fish barrel was emptied
+     */
+
+    public static boolean emptyFishBarrel() {
+        Rs2Item fishBarrel = Rs2Inventory.get(ItemID.OPEN_FISH_BARREL);
+        if (fishBarrel == null) return false;
+        return Rs2Inventory.interact(fishBarrel, "Empty");
+    }
+
+    /**
+     * Empty log basket
+     *
+     * @return true if log basket was emptied
+     */
+
+    public static boolean emptyLogBasket() {
+        Rs2Item logBasket = Rs2Inventory.get(ItemID.OPEN_LOG_BASKET);
+        if (logBasket == null) return false;
+        return Rs2Inventory.interact(logBasket, "Empty");
+    }
 
     /**
      * Withdraw items from the lootTrackerPlugin
