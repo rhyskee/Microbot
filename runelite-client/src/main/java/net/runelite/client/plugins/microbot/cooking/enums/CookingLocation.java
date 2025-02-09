@@ -42,7 +42,8 @@ public enum CookingLocation {
     HOSIDIUS(new WorldPoint(1738, 3612, 0), CookingAreaType.RANGE, ObjectID.RANGE_27517),
     HOSIDIUS_KITCHEN(new WorldPoint(1677, 3621, 0), CookingAreaType.RANGE, ObjectID.CLAY_OVEN_21302),
     NARDAH(new WorldPoint(3434, 2887, 0), CookingAreaType.RANGE, ObjectID.CLAY_OVEN),
-    LANDS_END(new WorldPoint(1515, 3442, 0), CookingAreaType.RANGE, ObjectID.RANGE_7183);
+    LANDS_END(new WorldPoint(1515, 3442, 0), CookingAreaType.RANGE, ObjectID.RANGE_7183),
+    MYTHS_GUILD(new WorldPoint(2465, 2848, 1), CookingAreaType.RANGE, ObjectID.RANGE_31631);
 
     private final WorldPoint cookingObjectWorldPoint;
     private final CookingAreaType cookingAreaType;
