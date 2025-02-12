@@ -98,4 +98,5 @@ public interface LunarPlankMakeConfig extends Config {
     )
     default boolean useVouchers() {
         return false;
+    }
 }
