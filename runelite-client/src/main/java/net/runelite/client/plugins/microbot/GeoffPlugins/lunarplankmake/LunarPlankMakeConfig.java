@@ -88,4 +88,14 @@ public interface LunarPlankMakeConfig extends Config {
     default int maxRandomDelay() {
         return 1000; // Default to 1000 milliseconds
     }
+
+    @ConfigItem(
+            keyName = "useVouchers",
+            name = "Use Sawmill Vouchers",
+            description = "Use Sawmill Vouchers",
+            position = 6,
+            section = generalSection
+    )
+    default boolean useVouchers() {
+        return false;
 }
