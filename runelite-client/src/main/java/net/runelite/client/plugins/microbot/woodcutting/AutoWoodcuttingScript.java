@@ -33,7 +33,7 @@ enum State {
 
 public class AutoWoodcuttingScript extends Script {
 
-    public static String version = "1.6.3";
+    public static String version = "1.6.4";
     public boolean cannotLightFire = false;
 
     State state = State.WOODCUTTING;
@@ -77,7 +77,7 @@ public class AutoWoodcuttingScript extends Script {
                     return;
                 }
 
-                if (Rs2Player.isMoving() || Rs2Player.isAnimating() || Microbot.pauseAllScripts)
+                if (state != State.RESETTING && (Rs2Player.isMoving() || Rs2Player.isAnimating() || Microbot.pauseAllScripts))
                     return;
 
                 if (Rs2AntibanSettings.actionCooldownActive)
@@ -119,14 +119,14 @@ public class AutoWoodcuttingScript extends Script {
             } catch (Exception ex) {
                 Microbot.log(ex.getMessage());
             }
-        }, 0, 1000, TimeUnit.MILLISECONDS);
+        }, 0, 100, TimeUnit.MILLISECONDS);
         return true;
     }
 
     private void resetInventory(AutoWoodcuttingConfig config) {
         switch (config.resetOptions()) {
             case DROP:
-                Rs2Inventory.dropAllExcept("axe", "tinderbox");
+                Rs2Inventory.dropAllExcept(false, config.interactOrder(), "axe", "tinderbox");
                 state = State.WOODCUTTING;
                 break;
             case BANK:
@@ -143,7 +143,7 @@ public class AutoWoodcuttingScript extends Script {
                 break;
             case FIREMAKE:
                 burnLog(config);
-                
+
                 if (Rs2Inventory.contains(config.TREE().getLog())) return;
 
                 walkBack(config);
@@ -168,9 +168,9 @@ public class AutoWoodcuttingScript extends Script {
         if (!isFiremake()) {
             Rs2Inventory.waitForInventoryChanges(() -> {
                 Rs2Inventory.use("tinderbox");
-                sleep(Rs2Random.between(300, 600));
-                Rs2Inventory.use(config.TREE().getLog());
-            });
+                sleepUntil(Rs2Inventory::isItemSelected);
+                Rs2Inventory.useLast(config.TREE().getLogID());
+            }, 300, 100);
         }
         sleepUntil(() -> (!isFiremake() && Rs2Player.waitForXpDrop(Skill.FIREMAKING)) || cannotLightFire, 5000);
     }
