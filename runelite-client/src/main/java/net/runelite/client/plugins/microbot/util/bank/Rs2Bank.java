@@ -1669,7 +1669,7 @@ public class Rs2Bank {
      */
 
     public static boolean emptyLogBasket() {
-        Rs2Item logBasket = Rs2Inventory.get(ItemID.OPEN_LOG_BASKET);
+        Rs2ItemModel logBasket = Rs2Inventory.get(ItemID.OPEN_LOG_BASKET);
         if (logBasket == null) return false;
         return Rs2Inventory.interact(logBasket, "Empty");
     }

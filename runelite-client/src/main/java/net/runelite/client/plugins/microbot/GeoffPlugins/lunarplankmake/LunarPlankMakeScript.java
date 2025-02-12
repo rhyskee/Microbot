@@ -101,11 +101,11 @@ public class LunarPlankMakeScript extends Script {
         Rs2Bank.depositAll(config.ITEM().getFinished());
         sleepUntilOnClientThread(() -> !Rs2Inventory.hasItem(config.ITEM().getFinished()));
 
-        if (Rs2Bank.hasItem(config.ITEM().getName()) && !useVouchers()) {
+        if (Rs2Bank.hasItem(config.ITEM().getName()) && !config.useVouchers()) {
             Rs2Bank.withdrawAll(config.ITEM().getName());
             sleepUntilOnClientThread(() -> Rs2Inventory.hasItem(config.ITEM().getName()));
         }
-        if (Rs2Bank.hasItem(config.ITEM().getName()) && useVouchers()) {
+        if (Rs2Bank.hasItem(config.ITEM().getName()) && config.useVouchers()) {
             Rs2Bank.withdrawX(config.ITEM().getName(), 13);
             sleepUntilOnClientThread(() -> Rs2Inventory.hasItem(config.ITEM().getName()));
         }
