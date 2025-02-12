@@ -1662,6 +1662,17 @@ public class Rs2Bank {
         return Rs2Inventory.interact(fishBarrel, "Empty");
     }
 
+    /**
+     * Empty log basket
+     *
+     * @return true if log basket was emptied
+     */
+
+    public static boolean emptyLogBasket() {
+        Rs2ItemModel logBasket = Rs2Inventory.get(ItemID.OPEN_LOG_BASKET);
+        if (logBasket == null) return false;
+        return Rs2Inventory.interact(logBasket, "Empty");
+    }
 
     /**
      * Withdraw items from the lootTrackerPlugin

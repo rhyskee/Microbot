@@ -32,6 +32,7 @@ public class CraftingPlugin extends Plugin {
     private final GlassblowingScript glassblowingScript = new GlassblowingScript();
     private final StaffScript staffScript = new StaffScript();
     private final FlaxSpinScript flaxSpinScript = new FlaxSpinScript();
+    private final AmethystDarts amethystDarts = new AmethystDarts();
 
     @Inject
     private CraftingConfig config;
@@ -72,6 +73,8 @@ public class CraftingPlugin extends Plugin {
             staffScript.run(config);
         } else if (config.activityType() == Activities.FLAX_SPINNING) {
             flaxSpinScript.run(config);
+        } else if (config.activityType() == Activities.AMETHYST_DARTS) {
+            amethystDarts.run(config);
         }
     }
 
@@ -81,6 +84,7 @@ public class CraftingPlugin extends Plugin {
         gemsScript.shutdown();
         defaultScript.shutdown();
         flaxSpinScript.shutdown();
+        amethystDarts.shutdown();
         overlayManager.remove(craftingOverlay);
     }
 }

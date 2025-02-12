@@ -60,4 +60,16 @@ public interface GiantsFoundryConfig extends Config {
     {
         return 14;
     }
+
+    @ConfigItem(
+            keyName = "BaToggle",
+            name = "Toggle Battleaxes",
+            description = "Uses battleaxes (mithril, adamant) instead",
+            position = 4
+    )
+    default boolean battleaxeToggle() {
+        return false;
+    }
+
+
 }

@@ -19,6 +19,7 @@ import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 
 import java.awt.event.KeyEvent;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static net.runelite.client.plugins.microbot.util.equipment.Rs2Equipment.get;
@@ -29,6 +30,13 @@ public class GiantsFoundryScript extends Script {
     static final int MOULD_JIG = 44777;
     static final int LAVA_POOL = 44631;
     static final int WATERFALL = 44632;
+
+    private static final Map<String, Integer> ITEM_NAME_TO_ID = Map.of(
+            "Mithril battleaxe", 12345, // Replace with the correct ID
+            "Mithril scimitar", 12346,  // Replace with the correct ID
+            "Adamant battleaxe", 12347,
+            "Adamant scimitar", 12348
+    );
 
     public static State state;
     static GiantsFoundryConfig config;
@@ -158,7 +166,7 @@ public class GiantsFoundryScript extends Script {
             return;
         }
 
-        if (!Rs2Inventory.hasItemAmount(config.FirstBar().getName(), config.firstBarAmount())
+        if (!config.battleaxeToggle() && !Rs2Inventory.hasItemAmount(config.FirstBar().getName(), config.firstBarAmount())
                 && !Rs2Inventory.hasItemAmount(config.SecondBar().getName(), config.secondBarAmount()) && !canPour()) {
             Rs2Bank.useBank();
             //check if inv is empty and deposit all inv items
@@ -167,25 +175,62 @@ public class GiantsFoundryScript extends Script {
                 this.shutdown();
                 return;
             }
-            Rs2Bank.withdrawX(true, config.FirstBar().getName(), config.firstBarAmount());
-            Rs2Bank.withdrawX(true, config.SecondBar().getName(), config.secondBarAmount());
+            if (!config.battleaxeToggle()) {
+                Rs2Bank.withdrawX(true, config.FirstBar().getName(), config.firstBarAmount());
+                Rs2Bank.withdrawX(true, config.SecondBar().getName(), config.secondBarAmount());
+            }
+            Rs2Bank.closeBank();
+            return;
+        }
+        if (config.battleaxeToggle() && !Rs2Inventory.hasItemAmount("Mithril battleaxe", config.firstBarAmount())
+                && !Rs2Inventory.hasItemAmount("Adamant battleaxe", config.secondBarAmount()) && !canPour()) {
+            Rs2Bank.useBank();
+            //check if inv is empty and deposit all inv items
+            if (Rs2Bank.count("Mithril battleaxe") < config.firstBarAmount() || Rs2Bank.count("Adamant battleaxe") < config.secondBarAmount()) {
+                Microbot.log("Insufficient bars in bank to continue");
+                this.shutdown();
+                return;
+            }
+            if (config.battleaxeToggle()) {
+                Rs2Bank.withdrawX(true, "Mithril battleaxe", config.firstBarAmount());
+                Rs2Bank.withdrawX(true, "Adamant battleaxe", config.secondBarAmount());
+            }
             Rs2Bank.closeBank();
             return;
         }
         Rs2Bank.closeBank();
-        if (Rs2Inventory.hasItem(config.FirstBar().getName()) && !canPour()) {
-            Rs2GameObject.interact(CRUCIBLE, "Fill");
-            sleepUntil(() -> Rs2Widget.findWidget("What metal would you like to add?", null) != null, 5000);
-            Rs2Keyboard.keyPress(getKeyFromBar(config.FirstBar()));
-            sleepUntil(() -> !Rs2Inventory.hasItem(config.FirstBar().getName()), 5000);
-        }
-        if (Rs2Inventory.hasItem(config.SecondBar().getName()) && !canPour()) {
-            Rs2GameObject.interact(CRUCIBLE, "Fill");
-            sleepUntil(() -> Rs2Widget.findWidget("What metal would you like to add?", null) != null, 5000);
-            sleep(600, 1200);
+        if  (!config.battleaxeToggle() && !canPour()) {
+            if (Rs2Inventory.hasItem(config.FirstBar().getName())) {
 
-            Rs2Keyboard.keyPress(getKeyFromBar(config.SecondBar()));
-            sleepUntil(() -> !Rs2Inventory.hasItem(config.SecondBar().getName()), 5000);
+                Rs2GameObject.interact(CRUCIBLE, "Fill");
+                sleepUntil(() -> Rs2Widget.findWidget("What metal would you like to add?", null) != null, 5000);
+                Rs2Keyboard.keyPress(getKeyFromBar(config.FirstBar()));
+                sleepUntil(() -> !Rs2Inventory.hasItem(config.FirstBar().getName()), 5000);
+            }
+            if (Rs2Inventory.hasItem(config.SecondBar().getName())) {
+                Rs2GameObject.interact(CRUCIBLE, "Fill");
+                sleepUntil(() -> Rs2Widget.findWidget("What metal would you like to add?", null) != null, 5000);
+                sleep(600, 1200);
+
+                Rs2Keyboard.keyPress(getKeyFromBar(config.SecondBar()));
+                sleepUntil(() -> !Rs2Inventory.hasItem(config.SecondBar().getName()), 5000);
+            }
+        }
+        if  (config.battleaxeToggle() && !canPour()) {
+            if (Rs2Inventory.hasItem(1369)) {
+                // Use the item on the crucible
+                Rs2Inventory.useItemOnObject(1369, CRUCIBLE); // Pass the item and object IDs
+                sleep(1500, 2200);
+                Rs2Keyboard.keyPress('4');
+                sleepUntil(() -> !Rs2Inventory.hasItem(1369), 5000); // Adjust to use ID if necessary
+            }
+            if (Rs2Inventory.hasItem(1371)) {
+                // Use the item on the crucible
+                Rs2Inventory.useItemOnObject(1371, CRUCIBLE); // Pass the item and object IDs
+                sleep(1500, 2200);
+                Rs2Keyboard.keyPress('4');
+                sleepUntil(() -> !Rs2Inventory.hasItem(1371), 5000); // Adjust to use ID if necessary
+            }
         }
         if (canPour()) {
             Rs2GameObject.interact(CRUCIBLE, "Pour");

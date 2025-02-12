@@ -2,6 +2,7 @@ package net.runelite.client.plugins.microbot.woodcutting;
 
 import net.runelite.api.AnimationID;
 import net.runelite.api.GameObject;
+import net.runelite.api.ItemID;
 import net.runelite.api.Skill;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.microbot.Microbot;
@@ -131,7 +132,7 @@ public class AutoWoodcuttingScript extends Script {
             case BANK:
                 List<String> itemNames = Arrays.stream(config.itemsToBank().split(",")).map(String::toLowerCase).collect(Collectors.toList());
 
-                if (Rs2Bank.isOpen()) {
+                if (Rs2Bank.isOpen() && Rs2Inventory.hasItem(ItemID.OPEN_LOG_BASKET)) {
                     Rs2Bank.emptyLogBasket();
                 };
 

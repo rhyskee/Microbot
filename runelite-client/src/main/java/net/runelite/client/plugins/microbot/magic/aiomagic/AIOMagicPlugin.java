@@ -61,9 +61,11 @@ public class AIOMagicPlugin extends Plugin {
 	private TeleAlchScript teleAlchScript;
 	@Inject
 	private StunAlchScript stunAlchScript;
+	@Inject
+	private FlaxSpinScript flaxSpinScript;
 
 	public static String version = "1.1.0";
-	
+
 	@Getter
 	private Rs2CombatSpells combatSpell;
 	@Getter
@@ -112,6 +114,9 @@ public class AIOMagicPlugin extends Plugin {
 			case STUNALCH:
 				stunAlchScript.run();
 				break;
+			case SPINFLAX:
+				flaxSpinScript.run();
+				break;
 		}
 	}
 
@@ -122,6 +127,7 @@ public class AIOMagicPlugin extends Plugin {
 		teleportScript.shutdown();
 		teleAlchScript.shutdown();
 		stunAlchScript.shutdown();
+		flaxSpinScript.shutdown();
 		overlayManager.remove(aioMagicOverlay);
 	}
 

@@ -56,6 +56,14 @@ public interface CraftingConfig extends Config {
     )
     String flaxSpinSection = "flaxspin";
 
+    @ConfigSection(
+            name = "Amethyst",
+            description = "Configure Settings for Amethyst  activity",
+            position = 4,
+            closedByDefault = true
+    )
+    String amethystSection = "amethyst";
+
     @ConfigItem(
             keyName = "Activity",
             name = "Activity",
@@ -66,6 +74,8 @@ public interface CraftingConfig extends Config {
     default Activities activityType() {
         return Activities.NONE;
     }
+
+
 
     @ConfigItem(
             keyName = "Afk",
@@ -120,5 +130,15 @@ public interface CraftingConfig extends Config {
     )
     default FlaxSpinLocations flaxSpinLocation() {
         return FlaxSpinLocations.NONE;
+    }
+    @ConfigItem(
+            keyName = "Amethyst",
+            name = "Amethyst",
+            description = "Choose the type of Amethyst to make",
+            position = 0,
+            section = amethystSection
+    )
+    default Amethyst amethystType(){
+        return Amethyst.NONE;
     }
 }

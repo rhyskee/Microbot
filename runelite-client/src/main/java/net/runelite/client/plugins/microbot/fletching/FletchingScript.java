@@ -91,7 +91,7 @@ public class FletchingScript extends Script {
             } catch (Exception ex) {
                 System.out.println(ex.getMessage());
             }
-        }, 6000, 10000, TimeUnit.MILLISECONDS);
+        }, 800, 4000, TimeUnit.MILLISECONDS);
     }
 
     private void bankItems(FletchingConfig config) {

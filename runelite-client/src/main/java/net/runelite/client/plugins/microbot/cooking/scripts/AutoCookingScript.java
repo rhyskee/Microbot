@@ -105,7 +105,7 @@ public class AutoCookingScript extends Script {
                             Rs2Antiban.takeMicroBreakByChance();
 
                             sleepUntil(() -> (Rs2Player.getAnimation() != AnimationID.IDLE));
-                            sleepUntilTrue(() -> (!hasRawItem(cookingItem) && !Rs2Player.isAnimating(3500))
+                            sleepUntilTrue(() -> (!hasRawItem(cookingItem) && !Rs2Player.isAnimating(3220))
                                     || Rs2Dialogue.isInDialogue() || Rs2Player.isWalking(), 500, 150000);
                             if (hasRawItem(cookingItem)) {
                                 break;
@@ -120,8 +120,6 @@ public class AutoCookingScript extends Script {
                         }
                     case DROPPING:
                         Microbot.status = "Dropping " + cookingItem.getBurntItemName();
-                        Rs2Inventory.dropAll(item -> item.name.equalsIgnoreCase(cookingItem.getBurntItemName()), config.getDropOrder());
-                        sleepUntilTrue(() -> !hasBurntItem(cookingItem), 500, 150000);
                         state = CookingState.BANKING;
                         break;
                     case BANKING:
@@ -136,7 +134,8 @@ public class AutoCookingScript extends Script {
 
                         if (hasCookedItem(cookingItem)) {
                             Rs2Bank.depositAll(cookingItem.getCookedItemName(), true);
-                            Rs2Random.wait(800, 1600);
+                            Rs2Bank.depositAll(cookingItem.getBurntItemName(),true);
+                            Rs2Random.wait(800, 2200);
                         }
                         
                         if (!hasRawItem(cookingItem)) {
@@ -145,7 +144,7 @@ public class AutoCookingScript extends Script {
                             return;
                         }
                         Rs2Bank.withdrawAll(cookingItem.getRawItemName(), true);
-                        Rs2Random.wait(800, 1600);
+                        Rs2Random.wait(400, 1700);
                         state = CookingState.WALKING;
                         Rs2Bank.closeBank();
                         break;
@@ -167,7 +166,7 @@ public class AutoCookingScript extends Script {
             } catch (Exception ex) {
                 Microbot.log(ex.getMessage());
             }
-        }, 0, 1000, TimeUnit.MILLISECONDS);
+        }, 0, 900, TimeUnit.MILLISECONDS);
         return true;
     }
     
