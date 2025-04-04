@@ -50,7 +50,7 @@ public class AttackNpcScript extends Script {
                 if (!Microbot.isLoggedIn() || !super.run() || !config.toggleCombat())
                     return;
 
-                if(config.state().equals(State.BANKING))
+                if(config.state().equals(State.BANKING) || config.state().equals(State.WALKING))
                     return;
 
                 List<String> npcsToAttack = Arrays.stream(config.attackableNpcs().split(","))
@@ -94,8 +94,6 @@ public class AttackNpcScript extends Script {
                     Microbot.status = "Attacking " + npc.getName();
                     AIOFighterPlugin.setCooldown(config.playStyle().getRandomTickInterval());
                     sleepUntil(Rs2Player::isInteracting, 1000);
-//                    sleepUntil(() -> Microbot.getClient().getLocalPlayer().isInteracting()
-//                            && Microbot.getClient().getLocalPlayer().getInteracting() instanceof NPC);
 
                     if (config.togglePrayer()) {
                         if (!config.toggleQuickPray()) {
