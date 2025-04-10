@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.ItemContainerChanged;
+import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.plugins.bank.BankPlugin;
@@ -58,8 +59,8 @@ public class Rs2Bank {
     public static final int BANK_ITEM_HEIGHT = 32;
     public static final int BANK_ITEM_Y_PADDING = 4;
     public static final int BANK_ITEMS_PER_ROW = 8;
-    private static final int X_AMOUNT_VARBIT = 3960;
-    private static final int SELECTED_OPTION_VARBIT = 6590;
+    private static final int X_AMOUNT_VARBIT = VarbitID.BANK_REQUESTEDQUANTITY;
+    private static final int SELECTED_OPTION_VARBIT = VarbitID.BANK_QUANTITY_TYPE;
     
     // BANK actions
     private static final int BANK_HANDLE_X_SET = 4;
@@ -511,6 +512,15 @@ public class Rs2Bank {
         int handleXSet = isInventory ? INVENTORY_HANDLE_X_SET : BANK_HANDLE_X_SET;
         int handleXUnset = isInventory ? INVENTORY_HANDLE_X_UNSET : BANK_HANDLE_X_UNSET;
         
+        if (!isInventory && Microbot.getVarbitValue(SELECTED_OPTION_VARBIT) == 4) {
+            handleXSet++;
+            handleXUnset++;
+        }
+        
+        if (Microbot.getVarbitValue(SELECTED_OPTION_VARBIT) == 3) {
+            handleXSet = isInventory ? 2 : 1;
+        }
+        
         if (Microbot.getVarbitValue(X_AMOUNT_VARBIT) == amount) {
             invokeMenu(handleXSet, rs2Item);
 
@@ -521,12 +531,13 @@ public class Rs2Bank {
         } else {
             invokeMenu(handleXUnset, rs2Item);
 
-            sleepUntil(() -> {
+             boolean foundEnterAmount = sleepUntil(() -> {
                 Widget widget = Rs2Widget.getWidget(162, 42);
                 if (widget == null) return false;
-                System.out.println(widget.getText());
                 return widget.getText().equalsIgnoreCase("Enter amount:");
             }, 5000);
+            
+            if (!foundEnterAmount) return false;
             
             Rs2Random.waitEx(1200, 100);
             Rs2Keyboard.typeString(String.valueOf(amount));
@@ -585,7 +596,11 @@ public class Rs2Bank {
         if (!Rs2Inventory.hasItem(rs2Item.id)) return false;
         container = BANK_INVENTORY_ITEM_CONTAINER;
 
-        invokeMenu(INVENTORY_HANDLE_ALL, rs2Item);
+        if (Microbot.getVarbitValue(SELECTED_OPTION_VARBIT) == 4) {
+            invokeMenu(2, rs2Item);
+        } else {
+            invokeMenu(INVENTORY_HANDLE_ALL, rs2Item);
+        }
         return true;
     }
 
@@ -931,7 +946,7 @@ public class Rs2Bank {
      * @param amount amount to withdraw
      * @param exact  exact search based on equalsIgnoreCase
      */
-    private static boolean withdrawX(String name, int amount, boolean exact) {
+    public static boolean withdrawX(String name, int amount, boolean exact) {
         return withdrawXItem(findBankItem(name, exact), amount);
     }
 
@@ -958,7 +973,11 @@ public class Rs2Bank {
         if (Rs2Inventory.isFull()) return false;
         container = BANK_ITEM_CONTAINER;
 
-        invokeMenu(BANK_HANDLE_ALL, rs2Item);
+        if (Microbot.getVarbitValue(SELECTED_OPTION_VARBIT) == 4) {
+            invokeMenu(1, rs2Item);
+        } else {
+            invokeMenu(BANK_HANDLE_ALL, rs2Item);
+        }
         return true;
     }
 
