@@ -41,7 +41,9 @@ import net.runelite.api.Skill;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.StatChanged;
+import net.runelite.client.Notifier;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.config.Notification;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.events.PluginChanged;
@@ -77,9 +79,13 @@ import net.runelite.client.util.ImageUtil;
         + "Plugin Scheduler", description = "Schedule plugins at your will", tags = { "microbot", "schedule",
                 "automation" }, enabledByDefault = false,priority = false)
 public class SchedulerPlugin extends Plugin {
+    public static String VERSION = "0.1.0";
     @Inject
     private SchedulerConfig config;
     final static String configGroup = "pluginscheduler";
+
+    // Store the original break handler logout setting
+    private Boolean savedBreakHandlerLogoutSetting = null;
 
     @Provides
     public SchedulerConfig provideConfig(ConfigManager configManager) {
@@ -129,8 +135,9 @@ public class SchedulerPlugin extends Plugin {
     private Optional<ZonedDateTime> breakStartTime = Optional.empty();
     // login tracking
     private Thread loginMonitor;
-
-    @Override
+    @Inject
+    private Notifier notifier;
+        @Override
     protected void startUp() {
 
         panel = new SchedulerPanel(this);
@@ -148,10 +155,10 @@ public class SchedulerPlugin extends Plugin {
         // Load saved schedules from config
 
         // Check initialization status before fully enabling scheduler
-        checkInitialization();
+        //checkInitialization();
 
         // Run the main loop
-        updateTask = executorService.scheduleAtFixedRate(() -> {
+        updateTask = executorService.scheduleWithFixedDelay(() -> {
             SwingUtilities.invokeLater(() -> {
                 // Only run scheduling logic if fully initialized
                 if (currentState.isSchedulerActive()) {
@@ -177,8 +184,7 @@ public class SchedulerPlugin extends Plugin {
         if (Microbot.getClientThread() == null || Microbot.getClient() == null) {
             return;
         }
-        setState(SchedulerState.INITIALIZING);
-
+        setState(SchedulerState.INITIALIZING);       
         // Schedule repeated checks until initialized or max checks reached
         
         Microbot.getClientThread().invokeLater(() -> {
@@ -260,6 +266,9 @@ public class SchedulerPlugin extends Plugin {
         saveScheduledPlugins();
         clientToolbar.removeNavigation(navButton);
         forceStopCurrentPluginScheduleEntry(true);
+        for (PluginScheduleEntry entry : scheduledPlugins) {
+            entry.close();
+        }
         if (this.loginMonitor != null && this.loginMonitor.isAlive()) {
             this.loginMonitor.interrupt();
             this.loginMonitor = null;
@@ -319,6 +328,12 @@ public class SchedulerPlugin extends Plugin {
             if (currentPlugin != null) {
                 forceStopCurrentPluginScheduleEntry(true);
             }
+            // Restore the original logout setting if it was stored
+            if (savedBreakHandlerLogoutSetting != null) {
+                Microbot.getConfigManager().setConfiguration(BreakHandlerConfig.configGroup, "Logout", savedBreakHandlerLogoutSetting);
+                log.info("Restored original logout setting: {}", savedBreakHandlerLogoutSetting);
+                savedBreakHandlerLogoutSetting = null; // Clear the stored value
+            }
             // Final state after fully stopped, disable the plugins we auto-enabled
             if (isBreakHandlerEnabled() && config.enableBreakHandlerAutomatically()) {
                 if (disableBreakHandler()) {
@@ -327,7 +342,9 @@ public class SchedulerPlugin extends Plugin {
             }
 
             setState(SchedulerState.HOLD);
-            logout();
+            if(config.autoLogOutOnStop()){
+                logout();
+            }
 
             log.info("Scheduler stopped - status: {}", currentState);
             return false;
@@ -336,7 +353,7 @@ public class SchedulerPlugin extends Plugin {
 
     private void checkSchedule() {
         // Update break status
-        boolean isOnBreak = isOnBreak();
+
         if (SchedulerState.LOGIN == currentState ||
                 SchedulerState.WAITING_FOR_LOGIN == currentState ||
                 SchedulerState.HARD_STOPPING_PLUGIN == currentState ||
@@ -365,7 +382,10 @@ public class SchedulerPlugin extends Plugin {
                         Duration.ofMinutes(minTimeToNextScheduleForTakingABreak));
             }
 
-            if (nextPluginWith == null && nextPluginPossible != null && !nextPluginPossible.hasOnlyTimeConditions() && !isOnBreak && !Microbot.isLoggedIn() ){                    
+            if (    nextPluginWith == null && 
+                    nextPluginPossible != null && 
+                    !nextPluginPossible.hasOnlyTimeConditions() 
+                    && !isOnBreak() && !Microbot.isLoggedIn() ){                    
                 // when the the next possible plugin is not a time condition and we are not logged in
                 log.info("Login required before the next possible plugin can run -> must check" + nextPluginPossible.getCleanName());
                 startLoginMonitoringThread();
@@ -392,8 +412,8 @@ public class SchedulerPlugin extends Plugin {
                 }
                 // If we're on a break, interrupt it
 
-                if (isOnBreak && (nextWithinFlag)) {
-                    log.info("Interrupting active break to start scheduled plugin: {}", nextPluginWith.getCleanName());
+                if (isOnBreak() && (nextWithinFlag)) {
+                    log.info("\n\tInterrupting active break to start scheduled plugin: {}", nextPluginWith.getCleanName());
                     interruptBreak();
 
                 }
@@ -402,13 +422,12 @@ public class SchedulerPlugin extends Plugin {
                 }
 
                 if (!currentState.isActivelyRunning() && !currentState.isAboutStarting()) {
-                    log.info("Scheduling next plugin: {}, not activly running, current state {}", nextPluginWith.getCleanName(),this.currentState);
+                    
+                    
                     scheduleNextPlugin();
                 } else {
-                    if(currentPlugin==null){
-                                                
-                        currentState = SchedulerState.WAITING_FOR_SCHEDULE;
-                        
+                    if(currentPlugin==null){                                                
+                        currentState = SchedulerState.WAITING_FOR_SCHEDULE;                        
                     }else{
                         if (!currentPlugin.isRunning() && !currentState.isAboutStarting()) {
                             currentState = SchedulerState.WAITING_FOR_SCHEDULE;
@@ -423,10 +442,18 @@ public class SchedulerPlugin extends Plugin {
             } else {
                 // If we're not on a break and there's nothing running, take a short break until
                 // next plugin
-                if (!isOnBreak &&
+                if (!isOnBreak() &&
                         currentState != SchedulerState.WAITING_FOR_SCHEDULE &&
                         currentState == SchedulerState.SCHEDULING) {
-                    startShortBreakUntilNextPlugin(true, 3);// short break with logout and max 3 minutes
+                    
+                    int breakDuration = Math.max(minTimeToNextScheduleForTakingABreak, config.maxBreakDuratation());
+                    startShortBreakUntilNextPlugin(config.autoLogOutOnBreak(), breakDuration);// short break with logout and max 3 minutes
+                }else if(currentState != SchedulerState.WAITING_FOR_SCHEDULE && currentState == SchedulerState.SHORT_BREAK){
+                    //make a resume break function  when no plugin is upcoming and the left break time is smaller than "threshold"
+                    //currentBreakDuration  -> last set break duration type "Duration"
+                    //breakStartTime breakStartTime -> last set break start time type "Optional<ZonedDateTime>"
+                    //breakStartTime.get().plus(currentBreakDuration) -> break end time type "ZonedDateTime"
+                    extendBreakIfNeeded(nextPluginWith, 30);
                 }
             }
 
@@ -440,7 +467,7 @@ public class SchedulerPlugin extends Plugin {
      * Interrupts an active break to allow a plugin to start
      */
     private void interruptBreak() {
-
+        
         currentBreakDuration = Duration.ZERO;
         breakStartTime = Optional.empty();
 
@@ -453,8 +480,15 @@ public class SchedulerPlugin extends Plugin {
         // Set break duration to 0 to end the break
         BreakHandlerScript.breakDuration = 0;
 
-        // Also reset the breakNow setting if it was set
+        // Also reset the breakNow setting if it was set -
         Microbot.getConfigManager().setConfiguration(BreakHandlerConfig.configGroup, "breakNow", false);
+
+        // Restore the original logout setting if it was stored
+        if (savedBreakHandlerLogoutSetting != null) {
+            Microbot.getConfigManager().setConfiguration(BreakHandlerConfig.configGroup, "Logout", savedBreakHandlerLogoutSetting);
+            log.info("Restored original logout setting: {}", savedBreakHandlerLogoutSetting);
+            savedBreakHandlerLogoutSetting = null; // Clear the stored value
+        }
 
         // Ensure we're not locked for future breaks
         unlockBreakHandler();
@@ -485,7 +519,8 @@ public class SchedulerPlugin extends Plugin {
     /**
      * Starts a short break until the next plugin is scheduled to run
      */
-    private boolean startShortBreakUntilNextPlugin(boolean logout, int beakDurationMinutes) {
+    private boolean startShortBreakUntilNextPlugin(boolean logout, 
+        int breakDurationMinutes) {
         if (!isBreakHandlerEnabled()) {
             return false;
         }
@@ -494,14 +529,21 @@ public class SchedulerPlugin extends Plugin {
         PluginScheduleEntry nextPlugin = getNextScheduledPlugin();
         Duration timeUntilNext = Duration.ZERO;
         ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
-        Microbot.getConfigManager().setConfiguration(BreakHandlerConfig.configGroup, "logout", logout);
+        
+        // Store the original logout setting before changing it
+        savedBreakHandlerLogoutSetting = Microbot.getConfigManager().getConfiguration(
+            BreakHandlerConfig.configGroup, "Logout", Boolean.class);
+        
+        // Set the new logout setting
+        Microbot.getConfigManager().setConfiguration(BreakHandlerConfig.configGroup, "Logout", logout);
+        
         if (nextPlugin == null) {
-            timeUntilNext = Duration.between(now, now.plusMinutes(beakDurationMinutes));
+            timeUntilNext = Duration.between(now, now.plusMinutes(breakDurationMinutes));
         } else {
             Optional<ZonedDateTime> nextStartTime = nextPlugin.getCurrentStartTriggerTime();
             if (!nextStartTime.isPresent()) {
                 // just a random time until next plugin
-                timeUntilNext = Duration.ofSeconds(Rs2Random.between(60, Math.max(80, beakDurationMinutes * 60)));
+                timeUntilNext = Duration.ofSeconds(Rs2Random.between(60, Math.max(80, breakDurationMinutes * 60)));
             } else {
                 timeUntilNext = Duration.between(now, nextStartTime.get());
             }
@@ -509,7 +551,7 @@ public class SchedulerPlugin extends Plugin {
 
         // Only start a break if we have more than 60 seconds until the next plugin
         if (timeUntilNext.getSeconds() <= 60) {
-
+            savedBreakHandlerLogoutSetting = null; // Clear the stored value
             return false;
         }
         if (nextPlugin != null) {
@@ -522,11 +564,12 @@ public class SchedulerPlugin extends Plugin {
 
         // Configure a break that ends just before the next plugin starts
         BreakHandlerScript.breakDuration = (int) breakSeconds;
-        currentBreakDuration = Duration.ofSeconds(breakSeconds);
+        this.currentBreakDuration = Duration.ofSeconds(breakSeconds);
         BreakHandlerScript.breakIn = 0;
 
         // Set state to indicate we're in a controlled short break
         sleepUntil(() -> BreakHandlerScript.isBreakActive(), 1000);
+        
         if (!BreakHandlerScript.isBreakActive()) {
             log.info("Break handler is not locked, unable to start short break");
             return false;
@@ -557,15 +600,46 @@ public class SchedulerPlugin extends Plugin {
      * Schedules the next plugin to run if none is running
      */
     private void scheduleNextPlugin() {
+        // Check if a non-default plugin is coming up soon
+        boolean prioritizeNonDefaultPlugins = config.prioritizeNonDefaultPlugins();
+        int nonDefaultPluginLookAheadMinutes = config.nonDefaultPluginLookAheadMinutes();
+        
+        if (prioritizeNonDefaultPlugins) {
+            // Look for any upcoming non-default plugin within the configured time window
+            PluginScheduleEntry upcomingNonDefault = getNextScheduledPlugin(false, Duration.ofMinutes(nonDefaultPluginLookAheadMinutes))
+                .filter(plugin -> !plugin.isDefault())
+                .orElse(null);
+                
+            // If we found an upcoming non-default plugin, check if it's already due to run
+            if (upcomingNonDefault != null && !upcomingNonDefault.isDueToRun()) {
+                // Get the next plugin that's due to run now
+                Optional<PluginScheduleEntry> nextDuePlugin = getNextScheduledPlugin(true, null);
+                
+                // If the next due plugin is a default plugin, don't start it
+                // Instead, wait for the non-default plugin
+                if (nextDuePlugin.isPresent() && nextDuePlugin.get().isDefault()) {
+                    log.info("Not starting default plugin '{}' because non-default plugin '{}' is scheduled within {} minutes",
+                        nextDuePlugin.get().getCleanName(),
+                        upcomingNonDefault.getCleanName(),
+                        nonDefaultPluginLookAheadMinutes);
+                    return;
+                }
+            }
+        }
+        
+        // Get the next plugin that's due to run
         Optional<PluginScheduleEntry> selected = getNextScheduledPlugin(true, null);
         if (selected.isEmpty()) {
             return;
         }
+        
         // If we're on a break, interrupt it, only we have initialized the break
         if (isOnBreak() && currentBreakDuration != null && currentBreakDuration.getSeconds() > 0) {
             log.info("\nInterrupting active break to start scheduled plugin: \n\t{}", selected.get().getCleanName());
             interruptBreak();
         }
+     
+       
         log.info("\nStarting scheduled plugin: \n\t{}\ncurrent state \n\t{}", selected.get().getCleanName(),this.currentState);
         startPluginScheduleEntry(selected.get());
         if (!selected.get().isRunning()) {
@@ -982,7 +1056,7 @@ public class SchedulerPlugin extends Plugin {
     public boolean saveScheduledPluginsToFile(File file) {
         try {
             // Convert to JSON
-            String json = PluginScheduleEntry.toJson(scheduledPlugins);
+            String json = PluginScheduleEntry.toJson(scheduledPlugins, this.VERSION);
             
             // Write to file
             java.nio.file.Files.writeString(file.toPath(), json);
@@ -1013,7 +1087,7 @@ public class SchedulerPlugin extends Plugin {
             log.info("Loading scheduled plugins from file: {}", file.getAbsolutePath());
             
             // Parse JSON
-            List<PluginScheduleEntry> loadedPlugins = PluginScheduleEntry.fromJson(json);
+            List<PluginScheduleEntry> loadedPlugins = PluginScheduleEntry.fromJson(json,  this.VERSION); 
             if (loadedPlugins == null) {
                 log.error("Failed to parse JSON from file");
                 return false;
@@ -1107,7 +1181,7 @@ public class SchedulerPlugin extends Plugin {
 
     public void saveScheduledPlugins() {
         // Convert to JSON and save to config
-        String json = PluginScheduleEntry.toJson(scheduledPlugins);
+        String json = PluginScheduleEntry.toJson(scheduledPlugins, this.VERSION);
 
         // log.info("Saving scheduled plugins to config: {}", json);
         // config.setScheduledPlugins(json);
@@ -1129,7 +1203,7 @@ public class SchedulerPlugin extends Plugin {
             log.info("Loading scheduled plugins from config: {}\n\n", json);
 
             if (json != null && !json.isEmpty()) {
-                scheduledPlugins = PluginScheduleEntry.fromJson(json);
+                scheduledPlugins = PluginScheduleEntry.fromJson(json,  this.VERSION);
 
                 // Apply stop settings from config to all loaded plugins
                 for (PluginScheduleEntry plugin : scheduledPlugins) {
@@ -1141,7 +1215,7 @@ public class SchedulerPlugin extends Plugin {
                     resolvePluginReferences(plugin);
 
                     StringBuilder logMessage = new StringBuilder();
-                    logMessage.append(String.format("Loaded scheduled plugin: %s with %d conditions:\n",
+                    logMessage.append(String.format("\nLoaded scheduled plugin: %s with %d conditions:\n",
                             plugin.getName(),
                             plugin.getStopConditionManager().getConditions().size()));
 
@@ -1243,7 +1317,8 @@ public class SchedulerPlugin extends Plugin {
      * @return Optional containing the next plugin to run, or empty if none match
      *         criteria
      */
-    public Optional<PluginScheduleEntry> getNextScheduledPlugin(boolean isDueToRun, Duration timeWindow) {
+    public Optional<PluginScheduleEntry> getNextScheduledPlugin(boolean isDueToRun, 
+                                                                Duration timeWindow) {
 
         if (scheduledPlugins.isEmpty()) {
             return Optional.empty();
@@ -1380,7 +1455,32 @@ public class SchedulerPlugin extends Plugin {
 
         // Check if conditions are met
         boolean stopStarted = currentPlugin.checkConditionsAndStop(true);
+        if (currentPlugin.isRunning() && !stopStarted && currentState != SchedulerState.SOFT_STOPPING_PLUGIN && currentPlugin.isDefault()){
+            boolean prioritizeNonDefaultPlugins = config.prioritizeNonDefaultPlugins();
+            // Use the configured look-ahead time window
+            int nonDefaultPluginLookAheadMinutes = config.nonDefaultPluginLookAheadMinutes(); 
+            PluginScheduleEntry nextPluginWithin = getNextScheduledPlugin(true, Duration.ofMinutes(nonDefaultPluginLookAheadMinutes)).orElse(null);
+            
+            if (nextPluginWithin != null && !nextPluginWithin.isDefault()) {
+                //String builder
+                StringBuilder sb = new StringBuilder();
+                sb.append("Plugin '").append(currentPlugin.getCleanName()).append("' is running and has a next scheduled plugin within ")
+                        .append(nonDefaultPluginLookAheadMinutes)
+                        .append(" minutes that is not a default plugin: '")
+                        .append(nextPluginWithin.getCleanName()).append("'");
+                log.info(sb.toString());
+                    
+            } 
+            
+            if(prioritizeNonDefaultPlugins && nextPluginWithin != null && !nextPluginWithin.isDefault()){
+                stopStarted = currentPlugin.stop(true);
+            }
+        }
         if (stopStarted) {
+            if (config.notificationsOn()){
+                String notificationMessage = "SoftStop Plugin '" + currentPlugin.getCleanName() + "' stopped because conditions were met";         
+                notifier.notify(Notification.ON, notificationMessage);
+            }
             log.info("Plugin '{}' stopped because conditions were met",
                     currentPlugin.getCleanName());
             // Set state to indicate we're stopping the plugin
@@ -2205,7 +2305,16 @@ public class SchedulerPlugin extends Plugin {
                     currentPlugin.getCleanName(),
                     event.getReason(),
                     event.isSuccess());
-
+            if (config.notificationsOn()){                
+                String notificationMessage = "Plugin '" + currentPlugin.getCleanName() + "' finished: " + event.getReason();
+                if (event.isSuccess()) {
+                    notificationMessage += " (Success)";
+                } else {
+                    notificationMessage += " (Failed)";
+                }
+                notifier.notify(Notification.ON, notificationMessage);
+                
+            }
             // Update the stop reason information
             currentPlugin.setLastStopReason(event.getReason());
             currentPlugin.setLastRunSuccessful(event.isSuccess());
@@ -2339,7 +2448,7 @@ public class SchedulerPlugin extends Plugin {
 
                     // Set state to error
                     setState(SchedulerState.SCHEDULING);
-                } else if (currentState == SchedulerState.SOFT_STOPPING_PLUGIN) {
+                } else if (currentState == SchedulerState.SOFT_STOPPING_PLUGIN) {                    
                     // If we were soft stopping and it completed, make sure stop reason is set
                     if (currentPlugin.getStopReasonType() == PluginScheduleEntry.StopReason.NONE) {
                         // Set stop reason if it wasn't already set
@@ -2347,7 +2456,7 @@ public class SchedulerPlugin extends Plugin {
                         currentPlugin.setLastStopReason("Scheduled stop completed successfully");
                         currentPlugin.setLastRunSuccessful(true);
                     }
-                } else if (currentState == SchedulerState.HARD_STOPPING_PLUGIN) {
+                } else if (currentState == SchedulerState.HARD_STOPPING_PLUGIN) {                    
                     // Hard stop completed
                     if (currentPlugin.getStopReasonType() == PluginScheduleEntry.StopReason.NONE) {
                         currentPlugin.setStopReasonType(PluginScheduleEntry.StopReason.HARD_STOP_TIMEOUT);
@@ -2645,5 +2754,118 @@ public class SchedulerPlugin extends Plugin {
         return sortPluginScheduleEntries(scheduledPlugins, false);
     }
 
-   
+    /**
+     * Extends an active break when it's about to end and there are no upcoming plugins
+     * @param thresholdSeconds Time in seconds before break end when we consider extending
+     * @return true if break was extended, false otherwise
+     */
+    private boolean extendBreakIfNeeded(PluginScheduleEntry nextPlugin, int thresholdSeconds) {
+        // Check if we're on a break and have break information
+        if (!isOnBreak() || !breakStartTime.isPresent() || currentBreakDuration.equals(Duration.ZERO) 
+        || currentState != SchedulerState.SHORT_BREAK) {
+            return false;
+        }
+
+        // Calculate when the current break will end
+        ZonedDateTime breakEndTime = breakStartTime.get().plus(currentBreakDuration);
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
+        
+        // Calculate how much time is left in the current break
+        Duration timeRemaining = Duration.between(now, breakEndTime);
+        
+        // If the break is about to end within the threshold seconds
+        if (timeRemaining.getSeconds() <= thresholdSeconds) {                                    
+            if (nextPlugin == null) {
+                // No upcoming plugin, extend the break
+                log.info("Break is about to end in {} seconds with no upcoming plugins. Extending break.", 
+                    timeRemaining.getSeconds());
+                
+                // Calculate new break duration (existing duration + config duration)
+                int extensionMinutes = config.maxBreakDuratation();
+                long newBreakSeconds = Rs2Random.normalRange(60, extensionMinutes * 60, 0.4);
+                newBreakSeconds  = Math.min( 60 , newBreakSeconds);
+                
+                // Configure extended break
+                BreakHandlerScript.breakDuration = (int) newBreakSeconds;
+                currentBreakDuration = Duration.ofSeconds(newBreakSeconds);
+                // We don't need to reset breakIn since we're already in a break
+                
+                // Update break start time to now so the duration calculation works correctly
+                breakStartTime = Optional.of(now);
+                
+                log.info("Break extended by {} minutes. New end time: {}", 
+                    extensionMinutes, now.plus(Duration.ofSeconds(newBreakSeconds)));
+                
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Manually start a plugin from the UI. This method ensures that:
+     * 1. The scheduler is in a safe state (SCHEDULING or SHORT_BREAK)
+     * 2. The requested plugin is in the scheduledPlugins list
+     * 3. There's enough time until the next scheduled plugin
+     *
+     * @param pluginEntry The plugin to start
+     * @return true if the plugin was started successfully, false otherwise with a reason message
+     */
+    public String manualStartPlugin(PluginScheduleEntry pluginEntry) {
+        // Check if plugin is null
+        if (pluginEntry == null) {
+            return "Invalid plugin selected";
+        }
+        
+        // Check if scheduler is in a safe state to start a plugin
+        if (currentState != SchedulerState.SCHEDULING && currentState != SchedulerState.SHORT_BREAK 
+                && currentState != SchedulerState.WAITING_FOR_SCHEDULE) {
+            return "Cannot start plugin in current state: " + currentState.getDisplayName();
+        }
+        
+        // Check if a plugin is already running
+        if (isScheduledPluginRunning()) {
+            return "Cannot start plugin: Another plugin is already running";
+        }
+        
+        // Check if the plugin is in the scheduled plugins list
+        if (!scheduledPlugins.contains(pluginEntry)) {
+            return "Cannot start plugin: Plugin is not in the scheduled plugins list";
+        }
+        
+        // Check if the plugin is enabled
+        if (!pluginEntry.isEnabled()) {
+            return "Cannot start plugin: Plugin is disabled";
+        }
+
+        // Check time until next scheduled plugin
+        PluginScheduleEntry nextPlugin = getNextScheduledPlugin();
+        if (nextPlugin != null && !nextPlugin.equals(pluginEntry)) {
+            Optional<ZonedDateTime> nextStartTime = nextPlugin.getCurrentStartTriggerTime();
+            if (nextStartTime.isPresent()) {
+                Duration timeUntilNext = Duration.between(
+                    ZonedDateTime.now(ZoneId.systemDefault()), nextStartTime.get());
+                
+                int minThreshold = config.minManualStartThresholdMinutes();
+                
+                if (timeUntilNext.toMinutes() < minThreshold) {
+                    return "Cannot start plugin: Next scheduled plugin due in less than " + 
+                           minThreshold + " minute(s)";
+                }
+            }
+        }
+        
+        // If we're on a break, interrupt it
+        if (currentState == SchedulerState.SHORT_BREAK) {
+            log.info("Interrupting break to manually start plugin: {}", pluginEntry.getCleanName());
+            interruptBreak();
+        }
+        
+        // Start the plugin
+        log.info("Manually starting plugin: {}", pluginEntry.getCleanName());
+        startPluginScheduleEntry(pluginEntry);
+        
+        return ""; // Empty string means success
+    }
 }
