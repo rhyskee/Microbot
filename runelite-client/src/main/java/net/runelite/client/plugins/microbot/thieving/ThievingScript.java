@@ -1,8 +1,7 @@
 package net.runelite.client.plugins.microbot.thieving;
 
+import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.NPC;
-import net.runelite.api.Skill;
-import net.runelite.api.Varbits;
 import net.runelite.api.coords.WorldArea;
 import net.runelite.client.game.npcoverlay.HighlightedNpc;
 import net.runelite.client.plugins.microbot.Microbot;
@@ -26,9 +25,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static net.runelite.client.plugins.microbot.util.equipment.Rs2Equipment.isEquipped;
+
 public class ThievingScript extends Script {
 
-    public static String version = "1.6.2";
+    public static String version = "1.6.5";
     ThievingConfig config;
 
     public boolean run(ThievingConfig config) {
@@ -64,12 +65,11 @@ public class ThievingScript extends Script {
                 if (config.shadowVeil()) {
                     handleShadowVeil();
                 }
-                
-                // Randomize coinpouch threshold +-3 between 1 & 28
+
                 int threshold = config.coinPouchTreshHold();
                 threshold += (int) (Math.random() * 7 - 3);
                 threshold = Math.max(1, Math.min(28, threshold));
-                  
+
                 openCoinPouches(threshold);
                 wearDodgyNecklace();
                 pickpocket();
@@ -159,6 +159,7 @@ public class ThievingScript extends Script {
                             if (!ardougneArea.contains(npc.getWorldLocation())) {
                                 Microbot.log("Highlighted Knight is NOT in Ardougne area - shutting down");
                                 shutdown();
+
                                 return;
                             }
                         }
@@ -227,7 +228,7 @@ public class ThievingScript extends Script {
                 if (wealthyCitizenToPickpocket.isPresent()) {
                     Rs2NpcModel pickpocketnpc = wealthyCitizenToPickpocket.get();
                     if (!Rs2Player.isAnimating(3000) && Rs2Npc.pickpocket(pickpocketnpc)) {
-                        Microbot.status = "Pickpocketting " + pickpocketnpc.getName();
+                        Microbot.status = "Pickpocketing " + pickpocketnpc.getName();
                         sleep(300, 600);
                     }
                 }
@@ -237,11 +238,12 @@ public class ThievingScript extends Script {
         }
 
     private void handleShadowVeil() {
-        if (!Rs2Magic.isShadowVeilActive() && Rs2Magic.isArceeus() &&
-            Rs2Player.getBoostedSkillLevel(Skill.MAGIC) >= MagicAction.SHADOW_VEIL.getLevel() &&
-            Microbot.getVarbitValue(Varbits.SHADOW_VEIL_COOLDOWN) == 0
-        ) {
-            Rs2Magic.cast(MagicAction.SHADOW_VEIL);
+        if (!Rs2Magic.isShadowVeilActive() && config.shadowVeil()) {
+            if (Rs2Magic.canCast(MagicAction.SHADOW_VEIL)) {
+                Rs2Magic.cast(MagicAction.SHADOW_VEIL);
+            } else {
+                Microbot.showMessage("Please check, unable to cast Shadow Veil");
+            }
         }
     }
 
@@ -253,22 +255,52 @@ public class ThievingScript extends Script {
         if (!isBankOpen || !Rs2Bank.isOpen()) return;
         Rs2Bank.depositAll();
 
+        Map<String, EquipmentInventorySlot> rogueEquipment = new HashMap<>();
+        rogueEquipment.put("Rogue mask", EquipmentInventorySlot.HEAD);
+        rogueEquipment.put("Rogue top", EquipmentInventorySlot.BODY);
+        rogueEquipment.put("Rogue trousers", EquipmentInventorySlot.LEGS);
+        rogueEquipment.put("Rogue boots", EquipmentInventorySlot.BOOTS);
+        rogueEquipment.put("Rogue gloves", EquipmentInventorySlot.GLOVES);
+        rogueEquipment.put("Thieving cape(t)",EquipmentInventorySlot.CAPE);
+
+        for (Map.Entry<String, EquipmentInventorySlot> entry : rogueEquipment.entrySet()) {
+            String itemName = entry.getKey();
+            EquipmentInventorySlot slot = entry.getValue();
+            if (!isEquipped(itemName, slot) && Rs2Bank.hasBankItem(itemName)) {
+                Rs2Bank.withdrawAndEquip(itemName);
+                Rs2Inventory.waitForInventoryChanges(1200);
+            }
+        }
+
+        if (config.shadowVeil()) {
+            if (!isEquipped("Lava battlestaff", EquipmentInventorySlot.WEAPON)) {
+                if (Rs2Bank.hasBankItem("Lava battlestaff")) {
+                    Rs2Bank.withdrawItem("Lava battlestaff");
+                    Rs2Inventory.waitForInventoryChanges(3000);
+                    if (Rs2Inventory.contains("Lava battlestaff")) {
+                        Rs2Inventory.wear("Lava battlestaff");
+                        Rs2Inventory.waitForInventoryChanges(3000);
+                    } else {
+                        Rs2Bank.withdrawAll(true, "Fire rune", true);
+                        Rs2Inventory.waitForInventoryChanges(3000);
+                        Rs2Bank.withdrawAll(true, "Earth rune", true);
+                        Rs2Inventory.waitForInventoryChanges(3000);
+                    }
+                }
+            }
+            Rs2Bank.withdrawAll(true, "Cosmic rune", true);
+            Rs2Inventory.waitForInventoryChanges(3000);
+        }
+
         boolean successfullyWithdrawFood = Rs2Bank.withdrawX(true, config.food().getName(), config.foodAmount(), true);
         if (!successfullyWithdrawFood) {
             Microbot.showMessage(config.food().getName() + " not found in bank");
-            sleep(5000);
-            return;
+            shutdown();
         }
 
+        Rs2Inventory.waitForInventoryChanges(3000);
         Rs2Bank.withdrawDeficit("dodgy necklace", config.dodgyNecklaceAmount());
-        if (config.shadowVeil()) {
-            Rs2Bank.withdrawAll(true, "Fire rune", true);
-            Rs2Inventory.waitForInventoryChanges(5000);
-            Rs2Bank.withdrawAll(true, "Earth rune", true);
-            Rs2Inventory.waitForInventoryChanges(5000);
-            Rs2Bank.withdrawAll(true, "Cosmic rune", true);
-            Rs2Inventory.waitForInventoryChanges(5000);
-        }
+
         Rs2Bank.closeBank();
         sleepUntil(() -> !Rs2Bank.isOpen());
     }
