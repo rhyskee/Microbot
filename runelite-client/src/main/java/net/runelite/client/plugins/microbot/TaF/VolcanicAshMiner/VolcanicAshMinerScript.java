@@ -83,7 +83,7 @@ public class VolcanicAshMinerScript extends Script {
             return;
         }
 
-        GameObject rock = Rs2GameObject.findReachableObject("Ash pile", true, 12, VOLCANIC_ASH_LOCATION);
+        GameObject rock = Rs2GameObject.getGameObject(30985);
         if (rock != null) {
             if (Rs2GameObject.interact(rock)) {
                 Rs2Player.waitForXpDrop(Skill.MINING, true);

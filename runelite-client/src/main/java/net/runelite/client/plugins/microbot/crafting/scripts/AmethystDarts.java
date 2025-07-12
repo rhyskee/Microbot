@@ -35,7 +35,7 @@ public class AmethystDarts extends Script {
                 if (!Microbot.isLoggedIn()) return;
                 if (!super.run()) return;
 
-                if (Rs2Player.isAnimating(3000) || Rs2Antiban.getCategory().isBusy() || Microbot.pauseAllScripts) return;
+                if (Rs2Player.isAnimating(3000) || Rs2Antiban.getCategory().isBusy()) return;
                 if (Rs2AntibanSettings.actionCooldownActive) return;
 
                 itemToCraft = config.amethystType();

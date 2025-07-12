@@ -100,7 +100,7 @@ public interface BanksBankStanderConfig extends Config {
     )
     @Range(
             min = 0,
-            max = 27
+            max = 1000
     )
 
     default int secondItemQuantity() {
