@@ -66,7 +66,7 @@ public class CraftingPlugin extends Plugin {
             currentScript = flaxSpinScript;
             flaxSpinScript.run(config);
         } else if (config.activityType() == Activities.AMETHYST_DARTS) {
-            currentScript = AmethystDarts;
+            currentScript = amethystDarts;
             amethystDarts.run(config);
         } else if (config.activityType() == Activities.DRAGON_LEATHER) {
             currentScript = dragonLeatherScript;

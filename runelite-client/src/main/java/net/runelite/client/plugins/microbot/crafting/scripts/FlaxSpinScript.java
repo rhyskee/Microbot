@@ -49,8 +49,8 @@ public class FlaxSpinScript extends Script implements ICraftingScript {
     }
 
     @Override
-    public Map<String, String> getCustomProperties() {
-        return Collections.emptyMap();
+    public Map<String, String> getCustomProperties(){
+            return Collections.emptyMap();
     }
 
 

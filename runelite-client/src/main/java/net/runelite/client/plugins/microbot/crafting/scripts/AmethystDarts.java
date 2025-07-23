@@ -15,16 +15,44 @@ import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
 
 import javax.naming.Name;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-public class AmethystDarts extends Script {
+public class AmethystDarts extends Script implements ICraftingScript {
 
     public static double version = 2.0;
 
     int amethyst = 21347;
     int chiselId = 1755;
+    private CraftingState state = CraftingState.IDLE;
     String chisel = "chisel";
     Amethyst itemToCraft;
+
+    @Override
+    public String getName() {
+        return "Amethyst Darts";
+    }
+
+    @Override
+    public String getVersion() {
+        return String.valueOf(version);
+    }
+
+    @Override
+    public String getState() {
+        if (state == null) {
+            return "null";
+        }
+        return state.toString();
+    }
+
+    @Override
+    public Map<String, String> getCustomProperties() {
+        return Collections.emptyMap();
+        }
+
 
     public void run(CraftingConfig config) {
 
