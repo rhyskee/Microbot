@@ -2195,11 +2195,7 @@ public class Rs2Bank {
      * @return true if log basket was emptied
      */
 
-    public static boolean emptyLogBasket() {
-        Rs2ItemModel logBasket = Rs2Inventory.get(ItemID.OPEN_LOG_BASKET);
-        if (logBasket == null) return false;
-        return Rs2Inventory.interact(logBasket, "Empty");
-    }
+    public static boolean emptyLogBasket() { return empty(ItemID.LOG_BASKET_CLOSED,ItemID.LOG_BASKET_OPEN);  }
 
     /**
      * Empty herb sack
