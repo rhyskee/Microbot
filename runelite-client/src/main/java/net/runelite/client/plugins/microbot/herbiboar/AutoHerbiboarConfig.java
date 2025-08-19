@@ -26,10 +26,11 @@ public interface AutoHerbiboarConfig extends Config {
             return name;
         }
     }
+
     @ConfigSection(
-            name = "Optionals to use",
-            description = "Optionals to use",
-            position = 0
+            name = "Optionals",
+            description = "Optionals",
+            position = 1
     )
     String OPTIONALS_SECTION = "optionals";
 
@@ -53,10 +54,20 @@ public interface AutoHerbiboarConfig extends Config {
     default boolean useMagicSecateurs() {
         return false;
     }
+    @ConfigItem(
+            keyName = "useHunterPotions",
+            name = "Hunter potions",
+            description = "Use Hunter potions when Hunter level falls below 80",
+            section = OPTIONALS_SECTION,
+            position = 2
+    )
+    default boolean useHunterPotions() {
+        return false;
+    }
     @ConfigSection(
             name = "Run energy management",
             description = "Run energy management",
-            position = 1
+            position = 2
     )
     String RUN_ENERGY_SECTION = "runenergy";
 
@@ -85,7 +96,7 @@ public interface AutoHerbiboarConfig extends Config {
     @ConfigSection(
             name = "Fossils to drop",
             description = "Fossils you don't want to keep",
-            position = 2,
+            position = 3,
             closedByDefault = true
     )
     String FOSSILS_SECTION = "fossils";
@@ -137,7 +148,7 @@ public interface AutoHerbiboarConfig extends Config {
     @ConfigSection(
             name = "Herbs to drop",
             description = "Herbs you don't want to keep",
-            position = 3,
+            position = 4,
             closedByDefault = true
     )
     String HERBS_SECTION = "herbs";
