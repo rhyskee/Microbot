@@ -34,7 +34,7 @@ public class AutoHerbiboarScript extends Script {
     private HerbiboarPlugin herbiboarPlugin;
     private AutoHerbiboarState state = AutoHerbiboarState.INITIALIZING;
     private boolean attackedTunnel;
-    private static final WorldPoint BANK_LOCATION = new WorldPoint(3769, 3898, 0);
+    private static final WorldPoint BANK_LOCATION = new WorldPoint(3765, 3899, 0);
     private static final WorldPoint RETURN_LOCATION = new WorldPoint(3727, 3892, 0);
     private int tunnelAttackAttempts = 0;
     private java.util.Set<WorldPoint> blacklistedTunnels = new java.util.HashSet<>();
