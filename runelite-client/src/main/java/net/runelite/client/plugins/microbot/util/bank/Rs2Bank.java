@@ -2194,14 +2194,6 @@ public class Rs2Bank {
     }
 
     /**
-     * Empty log basket
-     *
-     * @return true if log basket was emptied
-     */
-
-    public static boolean emptyLogBasket() { return empty(ItemID.LOG_BASKET_CLOSED,ItemID.LOG_BASKET_OPEN);  }
-
-    /**
      * Empty herb sack
      *
      * @return true if herb sack was emptied
