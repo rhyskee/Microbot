@@ -221,11 +221,7 @@ public class AutoWoodcuttingScript extends Script {
                 woodcuttingScriptState = WoodcuttingScriptState.WOODCUTTING;
                 break;
             case BANK:
-                List<String> itemNames = Arrays.stream(config.itemsToBank().split(",")).map(String::toLowerCase).collect(Collectors.toList());
 
-                if (Rs2Bank.isOpen() && Rs2Inventory.hasItem(28142)) {
-                Rs2Bank.emptyLogBasket();
-                };
                 if (!handleBanking(config))
                     return;
                 woodcuttingScriptState = WoodcuttingScriptState.WOODCUTTING;
