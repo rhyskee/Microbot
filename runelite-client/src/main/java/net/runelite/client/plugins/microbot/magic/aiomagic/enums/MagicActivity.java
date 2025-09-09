@@ -9,4 +9,5 @@ public enum MagicActivity {
     STUNALCH,
     SPINFLAX,
     STUNTELEALCH, // NEW
+    SPINFLAX,
 }
