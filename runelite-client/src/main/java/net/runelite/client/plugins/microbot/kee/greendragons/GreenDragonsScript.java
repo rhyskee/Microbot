@@ -10,6 +10,7 @@ import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.bank.enums.BankLocation;
 import net.runelite.client.plugins.microbot.util.combat.Rs2Combat;
+import net.runelite.client.plugins.microbot.util.gameobject.Rs2GameObject;
 import net.runelite.client.plugins.microbot.util.grounditem.LootingParameters;
 import net.runelite.client.plugins.microbot.util.grounditem.Rs2GroundItem;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
@@ -19,6 +20,7 @@ import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
 import net.runelite.client.plugins.microbot.util.npc.Rs2NpcModel;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
+import net.runelite.client.plugins.microbot.zerozero.bluedragons.BlueDragonState;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -138,7 +140,12 @@ public class GreenDragonsScript extends Script {
         if (Rs2Inventory.contains(mythCape)) {
             Microbot.log("Interacting with myth cape");
             Rs2Inventory.interact(mythCape, "Teleport");
-            sleepGaussian(5000, 200);
+            sleepGaussian(7000, 2500);
+
+        if (Rs2GameObject.exists(31627)) {
+            Rs2GameObject.interact(31627);
+            sleepGaussian(7000, 2500);
+        }
 
         if (Rs2Bank.walkToBankAndUseBank(BankLocation.MYTHS_GUILD))
             logOnceToChat("Opened bank. Depositing loot.", true, config);
@@ -165,6 +172,9 @@ public class GreenDragonsScript extends Script {
 
         if (!hasTeleport) {
             logOnceToChat("Missing teleport to cape or required runes.", false, config);
+        }
+        if (hasTeleport) {
+            currentState = GreenDragonState.BANKING;
         }
         else {
             logOnceToChat("Starting conditions not met. Stopping the plugin.", false, config);
@@ -279,7 +289,7 @@ public class GreenDragonsScript extends Script {
     private boolean checkForLoot() {
         String[] lootItems = {
             "Dragon bones", "Green dragonhide", "Ensouled dragon head",
-            "Dragon spear", "Shield left half", "Scaly blue dragonhide"
+            "Dragon spear", "Shield left half"
         };
         
         LootingParameters params = new LootingParameters(15, 1, 1, 0, false, true, lootItems);
@@ -288,15 +298,22 @@ public class GreenDragonsScript extends Script {
     }
     
     private void handleLooting(GreenDragonsConfig config) {
+
+
         if (currentState != GreenDragonState.LOOTING) {
             return;
         }
         
-        if (isInventoryFull()) {
+        if (isInventoryFull() && !Rs2Inventory.contains(3144)) {
             logOnceToChat("Inventory is full, switching to BANKING state.", false, config);
             currentState = GreenDragonState.BANKING;
             return;
         }
+        if (isInventoryFull() && Rs2Inventory.contains(3144)) {
+            Rs2Inventory.interact(3144, "Eat");
+            return;
+        }
+
         
         boolean lootedAnything = false;
         
@@ -310,7 +327,7 @@ public class GreenDragonsScript extends Script {
             lootedAnything |= lootItem("Shield left half");
         }
 
-        if (!isInventoryFull()) {
+        if (!isInventoryFull() && config.lootDragonhide()) {
             lootedAnything |= lootItem("Green dragonhide");
         }
         
