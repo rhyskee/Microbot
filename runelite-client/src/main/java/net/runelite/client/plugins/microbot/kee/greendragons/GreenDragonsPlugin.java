@@ -14,7 +14,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 import javax.inject.Inject;
 
 @PluginDescriptor(
-        name = PluginDescriptor.zerozero + "Green Dragons",
+        name = "[Kee] Green Dragons",
         description = "Green dragon farmer for bones",
         tags = {"blue", "dragons", "prayer"},
         enabledByDefault = false

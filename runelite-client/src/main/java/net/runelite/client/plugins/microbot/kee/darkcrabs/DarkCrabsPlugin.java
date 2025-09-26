@@ -12,7 +12,7 @@ import javax.inject.Inject;
 import java.awt.*;
 
 @PluginDescriptor(
-        name = "Dark Crab Fisher",
+        name = "[Kee] Dark Crab Fisher",
         description = "",
         tags = {"Kee"},
         enabledByDefault = false

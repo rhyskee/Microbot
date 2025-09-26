@@ -65,7 +65,7 @@ public static final WorldPoint SAFE_SPOT = new WorldPoint(3184, 3925, 0);
             if (!Rs2Player.isInteracting() || !Rs2Player.isAnimating()) {
                 if (Rs2Inventory.contains(ItemID.WILDERNESS_FISHING_BAIT)) {
                     Rs2Walker.walkTo(SAFE_SPOT);
-                    sleep(200, 400);
+                    Rs2Player.waitForWalking();
                     interactWithFishingSpot();
                     Rs2Player.waitForAnimation();
                     sleep(2000, 4000);
