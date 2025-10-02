@@ -20,7 +20,7 @@ import net.runelite.client.plugins.microbot.util.npc.Rs2Npc;
 import net.runelite.client.plugins.microbot.util.npc.Rs2NpcModel;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
-import net.runelite.client.plugins.microbot.zerozero.bluedragons.BlueDragonState;
+import net.runelite.client.plugins.microbot.kee.greendragons.GreenDragonState;
 
 import javax.inject.Inject;
 import java.util.List;
