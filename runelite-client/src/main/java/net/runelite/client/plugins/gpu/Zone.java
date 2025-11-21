@@ -48,8 +48,6 @@ import static org.lwjgl.opengl.GL33C.*;
 @RequiredArgsConstructor
 class Zone
 {
-	private static final boolean USE_STATIC_UNSORTED = false;
-
 	// Zone vertex format
 	// index 0: short vec3(x, y, z)
 	// index 1: int abhsl
@@ -470,7 +468,7 @@ class Zone
 	}
 
 	// this needs to be larger than the max model alpha face count * 3
-	private static final IntBuffer alphaElements = BufferUtils.createIntBuffer(16384);
+	private static final IntBuffer alphaElements = BufferUtils.createIntBuffer(FacePrioritySorter.MAX_VERTEX_COUNT * 3);
 
 	private static final int STATIC = 1;
 	private static final int TEMP = 2;
@@ -511,7 +509,7 @@ class Zone
 		);
 	}
 
-	void renderAlpha(int zx, int zz, int cyaw, int cpitch, int minLevel, int currentLevel, int maxLevel, int level, Set<Integer> hiddenRoofIds)
+	void renderAlpha(int zx, int zz, int cyaw, int cpitch, int minLevel, int currentLevel, int maxLevel, int level, Set<Integer> hiddenRoofIds, boolean useStaticUnsorted)
 	{
 		drawOff.clear();
 		drawEnd.clear();
@@ -561,7 +559,7 @@ class Zone
 				continue;
 			}
 
-			if (USE_STATIC_UNSORTED)
+			if (useStaticUnsorted)
 			{
 				lastDrawMode = STATIC_UNSORTED;
 				pushRange(m.startpos, m.endpos);
@@ -598,6 +596,12 @@ class Zone
 
 			if (packedFaces.length * 3 > alphaElements.remaining())
 			{
+				if (packedFaces.length * 3 > alphaElements.capacity())
+				{
+					log.debug("Alpha model too large: {}", packedFaces.length);
+					continue;
+				}
+
 				flush();
 			}
 
